@@ -31,7 +31,9 @@ I have a fully functional AI-powered file management system that uses the OpenRo
 2. Double-click `Robot.exe`
 3. Enter your file management command in plain English
 4. Choose dry-run (y) or live execution (n)
-5. Confirm the generated code (y) and watch it execute
+   - **Dry Run**: Automatically lists proposed actions (safe simulation).
+   - **Live Execution**: Shows code and asks for final confirmation before running.
+5. Watch it execute
 6. Check `robot_log.txt` for operation details
 
 ### Example Commands:
@@ -49,7 +51,7 @@ I have a fully functional AI-powered file management system that uses the OpenRo
 - Auto-failover model selection
 
 ### Security & Robustness:
-- `os.walk()` with system folder filtering
+- **Whole Drive Safety**: Automatically skips sensitive system folders (`Windows`, `Program Files`, `AppData`) during broad searches.
 - Try-except blocks for every file operation
 - Timestamp-based collision detection for file conflicts
 - PermissionError handling to skip protected folders
@@ -63,4 +65,4 @@ I have a fully functional AI-powered file management system that uses the OpenRo
 - **Configuration:** `.env`
 
 ---
-*Built: February 4, 2026 | Status: Production Release | Version: 1.0*
+*Built: February 5, 2026 | Status: Production Release | Version: 1.1 (Gemini Upgrade)*

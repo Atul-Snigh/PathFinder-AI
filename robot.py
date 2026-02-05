@@ -1,29 +1,39 @@
-import os # Standard library
+import os
 import sys
 import datetime
 import re
+import shutil
+import glob
 from openai import OpenAI
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
-client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("OPENROUTER_API_KEY"))
 
-# Logging function to keep track of the robot's work
+# Configuration
+API_KEY = os.getenv("OPENROUTER_API_KEY")
+BASE_URL = "https://openrouter.ai/api/v1"
+MODEL_NAME = "google/gemini-2.0-flash-001"
+
+client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
+
+SYSTEM_PROMPT = """
+You are a File Robot powered by Google Gemini.
+CRITICAL RULES:
+1. Output ONLY a single Markdown code block (```python ... ```). Do NOT write any text outside this block.
+2. If asked to search "whole drive" or "C:", ALWAYS use os.walk('C:/') but INSIDE the loop, YOU MUST STRICTLY SKIP: 'Windows', 'Program Files', 'Program Files (x86)', 'AppData', '$Recycle.Bin', 'System Volume Information'.
+   Code: if any(x in root for x in ['Windows', 'Program Files', 'AppData', '$Recycle.Bin']): continue
+3. Use try-except blocks for EVERY file operation to skip PermissionError.
+4. If moving files, check if the destination file exists. If it does, append a timestamp to the filename to avoid overwriting.
+5. You ARE ALLOWED to create files and folders. Use os.makedirs(path, exist_ok=True) for folders.
+6. Every file operation must use log_action("ACTION: description"). Use uppercase for the action type (e.g., MOVED: file.pdf, CREATED: folder, DELETED: temp.txt).
+"""
+
 def log_action(message):
+    """Logs actions to robot_log.txt with a timestamp."""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open("robot_log.txt", "a") as f:
         f.write(f"[{timestamp}] {message}\n")
-
-SYSTEM_PROMPT = """
-You are a Senior File Robot.
-CRITICAL RULES:
-1. Output ONLY a single Markdown code block (```python ... ```). Do NOT write any text outside this block.
-2. Use os.walk(). INSIDE the loop, check: if any(x in root for x in ['Windows', 'Program Files', 'AppData', '$Recycle.Bin']): continue
-3. Use try-except blocks for EVERY file operation to skip PermissionError.
-4. If moving files, check if the destination file exists. If it does, append a timestamp to the filename.
-5. You ARE ALLOWED to create files and folders. Use os.makedirs(path, exist_ok=True) for folders.
-6. Every file operation must use log_action("ACTION: description"). Use uppercase for the action type (e.g., MOVED: file.pdf, CREATED: folder, DELETED: temp.txt) to emphasize the item and modification.
-"""
 
 def clean_code_block(response):
     """Extracts code from a markdown block if present."""
@@ -32,12 +42,11 @@ def clean_code_block(response):
         return match.group(1).strip()
     # Fallback: check if the response is just code or has some conversational prefix
     if "def " in response or "import " in response:
-        # If no markdown but looks like code, try to return it.
-        # But safest is to return as is if no blocks found, assuming the prompt worked.
         return response.strip()
     return response.strip()
 
 def get_robot_instruction(user_query, dry_run=True):
+    """Gets Python code from the AI based on the user query."""
     mode_instruction = (
         "STRICT RULE: Only list the actions you would take. "
         "Do NOT move files. Use print() to show what WOULD happen."
@@ -48,7 +57,7 @@ def get_robot_instruction(user_query, dry_run=True):
     
     try:
         response = client.chat.completions.create(
-            model="openrouter/free", # Using OpenRouter's auto-free model
+            model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": full_prompt},
                 {"role": "user", "content": user_query}
@@ -56,25 +65,25 @@ def get_robot_instruction(user_query, dry_run=True):
         )
         return clean_code_block(response.choices[0].message.content)
     except Exception as e:
-        return f"Error connecting to OpenRouter: {e}"
+        return f"Error connecting to AI Provider: {e}"
 
 def execute_robot_code(code):
+    """Executes the generated Python code in a controlled environment."""
     print("\nRobot is working...")
     
-    # Check for error messages from API
     if code.startswith("Error"):
         print(f"ERROR: {code}")
         return
     
-    # We pass 'log_action' into the exec environment so the AI can use it
+    # Environment for the executed code
     namespace = {
         "os": os,
-        "shutil": __import__('shutil'),
-        "glob": __import__('glob'),
+        "shutil": shutil,
+        "glob": glob,
         "log_action": log_action
     }
 
-    # Protect the parent's stdin from being closed or replaced by executed code.
+    # Protect stdin
     import sys as _sys
     saved_stdin_fd = None
     try:
@@ -102,33 +111,32 @@ def execute_robot_code(code):
             except Exception:
                 pass
 
+def has_stdin():
+    """Checks if standard input is available."""
+    try:
+        return sys.stdin is not None and sys.stdin.fileno() >= 0
+    except Exception:
+        return False
+
+def safe_input(prompt='', default=None):
+    """Safely gets input from the user, handling errors."""
+    try:
+        return input(prompt)
+    except (RuntimeError, EOFError) as e:
+        if isinstance(e, RuntimeError) and 'lost sys.stdin' in str(e):
+            return default
+        if isinstance(e, EOFError):
+            return default
+        raise
+
 def main():
-    def has_stdin():
-        try:
-            return sys.stdin is not None and sys.stdin.fileno() >= 0
-        except Exception:
-            return False
-
-    def safe_input(prompt='', default=None):
-        try:
-            return input(prompt)
-        except (RuntimeError, EOFError) as e:
-            if isinstance(e, RuntimeError) and 'lost sys.stdin' in str(e):
-                return default
-            if isinstance(e, EOFError):
-                return default
-            raise
-
     # Support running a single command via CLI args (non-interactive)
     if len(sys.argv) > 1:
         user_input = ' '.join(sys.argv[1:])
         dry_run = True
         generated_code = get_robot_instruction(user_input, dry_run=dry_run)
         log_action(f"CLI Request: {user_input} | Dry Run: {dry_run}")
-        print(f"Generated Code [DRY RUN (from args)]:\n{generated_code}")
-        confirm = safe_input("Run this code? (y/n, default n): ", default='n')
-        if confirm and confirm.lower() == 'y':
-            execute_robot_code(generated_code)
+        execute_robot_code(generated_code)
         return
 
     if not has_stdin():
@@ -150,20 +158,17 @@ def main():
         dry_run_input = safe_input("Dry Run? (y/n, default y): ", default='y')
         dry_run = (dry_run_input or 'y').strip().lower() != 'n'
 
-        # 1. Get code from Gemini (with dry-run flag)
         generated_code = get_robot_instruction(user_input, dry_run=dry_run)
-        
-        # Log the attempt
         log_action(f"Request: {user_input} | Dry Run: {dry_run}")
 
-        # 2. Show the code to the user for confirmation (Optional but safer)
-        mode_label = "DRY RUN (Simulation)" if dry_run else "LIVE EXECUTION"
-        print(f"Generated Code [{mode_label}]:\n{generated_code}")
-        confirm = safe_input("Run this code? (y/n): ", default='n')
-
-        if confirm and confirm.lower() == 'y':
+        if dry_run:
             execute_robot_code(generated_code)
+        else:
+            print(f"Generated Code [LIVE EXECUTION]:\n{generated_code}")
+            confirm = safe_input("Run this code? (y/n): ", default='n')
+
+            if confirm and confirm.lower() == 'y':
+                execute_robot_code(generated_code)
 
 if __name__ == "__main__":
     main()
-    
