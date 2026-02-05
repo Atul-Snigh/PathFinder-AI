@@ -1,0 +1,17 @@
+[2026-02-04 16:48:56] ERROR: invalid syntax (<string>, line 1)
+[2026-02-04 16:53:14] ERROR: invalid syntax (<string>, line 1)
+[2026-02-04 17:27:31] Created file RobotTest/Destination\test_output.txt with specified content
+[2026-02-04 17:27:31] Demo: File verification successful
+[2026-02-04 17:30:30] ERROR: expected ':' (<string>, line 6)
+[2026-02-04 17:41:07] ERROR: unterminated string literal (detected at line 1) (<string>, line 1)
+moved PDF: C:\Users\satya\Desktop\Final_Robot_Archive\CREDITS.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\CREDITS_20260204174906.pdf
+moved PDF: C:\Users\satya\OneDrive\eng assign 2.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\eng assign 2.pdf
+moved PDF: C:\Users\satya\OneDrive\Getting started with OneDrive.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\Getting started with OneDrive.pdf
+moved PDF: C:\Users\satya\OneDrive\Desktop\My Project\PathFinder AI\RobotTest\Destination\file1.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\file1.pdf
+moved PDF: C:\Users\satya\OneDrive\Desktop\My Project\PathFinder AI\RobotTest\Destination\file2.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\file2.pdf
+moved PDF: C:\Users\satya\OneDrive\Desktop\My Project\PathFinder AI\RobotTest\Source\file1.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\file1_20260204174916.pdf
+moved PDF: C:\Users\satya\OneDrive\Desktop\My Project\PathFinder AI\RobotTest\Source\file2.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\file2_20260204174916.pdf
+moved PDF: C:\Users\satya\OneDrive\Pictures\dock.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\dock.pdf
+moved PDF: C:\Users\satya\OneDrive\Pictures\Saved Pictures\KRUPANIDHI degree college logo PHOTO - Bing images_files\cmalab pictures.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\cmalab pictures.pdf
+moved PDF: C:\Users\satya\OneDrive\Pictures\Saved Pictures\KRUPANIDHI degree college logo PHOTO - Bing images_files\CMALabManual-IVSEM-BCA-2022-23-BNU.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\CMALabManual-IVSEM-BCA-2022-23-BNU.pdf
+moved PDF: C:\Users\satya\OneDrive\Pictures\Saved Pictures\KRUPANIDHI degree college logo PHOTO - Bing images_files\lab program part B.pdf to C:\Users\satya\Desktop\Final_Robot_Archive\lab program part B.pdf
