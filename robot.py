@@ -22,7 +22,7 @@ CRITICAL RULES:
 3. Use try-except blocks for EVERY file operation to skip PermissionError.
 4. If moving files, check if the destination file exists. If it does, append a timestamp to the filename.
 5. You ARE ALLOWED to create files and folders. Use os.makedirs(path, exist_ok=True) for folders.
-6. Every file operation must use log_action("description").
+6. Every file operation must use log_action("ACTION: description"). Use uppercase for the action type (e.g., MOVED: file.pdf, CREATED: folder, DELETED: temp.txt) to emphasize the item and modification.
 """
 
 def clean_code_block(response):
@@ -85,6 +85,7 @@ def execute_robot_code(code):
 
         try:
             exec(code, namespace)
+            log_action("Task execution successful")
             print("\nTask Completed. Check robot_log.txt for details.")
         except Exception as e:
             log_action(f"ERROR: {str(e)}")
@@ -123,6 +124,7 @@ def main():
         user_input = ' '.join(sys.argv[1:])
         dry_run = True
         generated_code = get_robot_instruction(user_input, dry_run=dry_run)
+        log_action(f"CLI Request: {user_input} | Dry Run: {dry_run}")
         print(f"Generated Code [DRY RUN (from args)]:\n{generated_code}")
         confirm = safe_input("Run this code? (y/n, default n): ", default='n')
         if confirm and confirm.lower() == 'y':
@@ -150,6 +152,9 @@ def main():
 
         # 1. Get code from Gemini (with dry-run flag)
         generated_code = get_robot_instruction(user_input, dry_run=dry_run)
+        
+        # Log the attempt
+        log_action(f"Request: {user_input} | Dry Run: {dry_run}")
 
         # 2. Show the code to the user for confirmation (Optional but safer)
         mode_label = "DRY RUN (Simulation)" if dry_run else "LIVE EXECUTION"
